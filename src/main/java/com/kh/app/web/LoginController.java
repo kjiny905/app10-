@@ -3,6 +3,8 @@ package com.kh.app.web;
 import com.kh.app.domain.entity.Member;
 import com.kh.app.domain.member.svc.MemberSVC;
 import com.kh.app.web.form.login.LoginForm;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +14,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.Optional;
 
@@ -33,10 +36,14 @@ public class LoginController {
   @PostMapping("/login")
   public String login(
       @Valid @ModelAttribute LoginForm loginForm,
-      BindingResult bindingResult){
+      BindingResult bindingResult,
+      HttpServletRequest httpServletRequest,
+      @RequestParam(value = "redirectUrl",required = false, defaultValue = "/") String redirectUrl
+      ){
 
+    log.info("reqpage={}",redirectUrl);
     if(bindingResult.hasErrors()){
-      log.info("bindingResult={}", bindingResult);
+      log.info("bindingResult={}",bindingResult);
       return "login";
     }
 
@@ -46,17 +53,35 @@ public class LoginController {
       return "login";
     }
 
-    //2)아이디 비밀번호
-    Optional<Member> loginMember = memberSVC.login(loginForm.getEmail(), loginForm.getPasswd());
+    //2)로그인
+    Optional<Member> member = memberSVC.login(loginForm.getEmail(), loginForm.getPasswd());
+    if(member.isEmpty()){
+      bindingResult.rejectValue("passwd","login","비밀번호가 일치하지 않습니다.");
+      return "login";
+    }
 
-    return "redirect:/";    //로그인 후 메인화면보여주기
+    //3)세션 생성
+    //세션이 있으면 해당 정보를 가져오고, 없으면 세션을 생성한다.
+    HttpSession session = httpServletRequest.getSession(true);
+    LoginMember loginMember = new LoginMember(
+        member.get().getMemberId(),
+        member.get().getEmail(),
+        member.get().getNickname(),
+        member.get().getGubun()
+        ); //옵션에서 멤버 객체를 가져와 회원의 정보를 value에 담을 세션 객체
+    session.setAttribute(SessionConst.LOGIN_MEMBER, loginMember);
+
+    return "redirect:"+redirectUrl;    //로그인 후 메인화면 보여주기
   }
 
   //로그아웃
   @GetMapping("logout")
-  public String logout(){
-
-    return "redirect:/";    //로그아웃 후 메인화면
+  public String logout(HttpServletRequest httpServletRequest){
+    //세션이 있으면 해당 정보를 가져오고, 없으면 세션을 생성하지 않음
+    HttpSession session = httpServletRequest.getSession(false);
+    if(session != null){
+      session.invalidate(); //세션 제거
+    }
+    return "redirect:/";    //로그아웃 후 메인화면 보여주기
   }
-
 }

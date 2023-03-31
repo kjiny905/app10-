@@ -64,16 +64,15 @@ public class MemberSVCImpl implements MemberSVC{
   }
 
   /**
-   * 회원아이디(email) 존재유무확인
    * @param email
    */
   @Override
   public void delete(String email) {
-    return;
 
   }
 
   /**
+   * 회원아이디(email) 존재유무확인
    * @param email
    * @return
    */
@@ -90,6 +89,7 @@ public class MemberSVCImpl implements MemberSVC{
    */
   @Override
   public Optional<Member> login(String email, String passwd) {
+
     return memberDAO.login(email,passwd);
   }
 

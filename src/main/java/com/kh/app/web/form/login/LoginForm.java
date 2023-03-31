@@ -14,6 +14,6 @@ public class LoginForm {
 
   @NotBlank
   @Size(min=4, max=12)
-//  @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{4,12}$") //대소문자,숫자 4~12자리
+//  @Pattern(regexp="^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{4,12}$") //소문자,대문자,숫자 4~12자리
   private String passwd;
 }
